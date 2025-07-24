@@ -1,8 +1,8 @@
 /**
- * @fileOverview Sistem penanganan error terpusat untuk service layer.
+ * @fileOverview Centralized error handling system for service layer.
  *
- * File ini menyediakan fungsi-fungsi helper untuk menangani error secara konsisten
- * di seluruh service layer, termasuk transformasi error dari API ke AppException.
+ * This file provides helper functions to handle errors consistently
+ * across the service layer, including transforming API errors to AppExceptions.
  */
 
 import {
@@ -10,94 +10,110 @@ import {
   ValidationException,
   NotFoundException,
   InternalServerException,
-} from "@/lib/exceptions";
+} from '@/lib/exceptions';
 
-import { ApiResponse } from "./httpClient";
+import { ApiResponse } from './httpClient';
 
 /**
- * Tipe untuk callback yang menangani error
+ * Type for error handling callback
  */
 export type ErrorHandler<T> = (error: unknown) => T;
 
-/**
- * Mengubah error dari API response menjadi AppException yang sesuai
- * @param response Response API yang gagal
- * @param defaultMessage Pesan default jika tidak ada pesan error
- * @param context Konteks tambahan untuk error
- */
-export function transformApiError(
-  response: ApiResponse<unknown>,
-  defaultMessage: string = "Terjadi kesalahan pada server",
-  context?: Record<string, unknown>
-): AppException {
-  // Jika ada pesan error spesifik dari API, gunakan itu
-  const errorMessage = response.error ?? response.message ?? defaultMessage;
+// Constants for error detection
+const NOT_FOUND_KEYWORDS = ['not found', 'tidak ditemukan'];
+const VALIDATION_KEYWORDS = ['validation', 'validasi', 'invalid', 'tidak valid'];
 
-  // Tentukan jenis exception berdasarkan pola pada pesan error
-  if (
-    errorMessage.toLowerCase().includes("not found") ||
-    errorMessage.toLowerCase().includes("tidak ditemukan")
-  ) {
+/**
+ * Checks if error message contains specific keywords
+ */
+const containsKeywords = (message: string, keywords: string[]): boolean => {
+  const lowerMessage = message.toLowerCase();
+  return keywords.some(keyword => lowerMessage.includes(keyword));
+};
+
+/**
+ * Determines exception type based on error message patterns
+ */
+const determineExceptionType = (
+  errorMessage: string,
+  context?: Record<string, unknown>,
+): AppException => {
+  if (containsKeywords(errorMessage, NOT_FOUND_KEYWORDS)) {
     return new NotFoundException(errorMessage, context);
   }
 
-  if (
-    errorMessage.toLowerCase().includes("validation") ||
-    errorMessage.toLowerCase().includes("validasi") ||
-    errorMessage.toLowerCase().includes("invalid") ||
-    errorMessage.toLowerCase().includes("tidak valid")
-  ) {
+  if (containsKeywords(errorMessage, VALIDATION_KEYWORDS)) {
     return new ValidationException(errorMessage, context);
   }
 
-  // Default ke InternalServerException
+  // Default to InternalServerException
   return new InternalServerException(errorMessage, context);
-}
+};
 
 /**
- * Fungsi helper untuk menangani error secara konsisten di service layer
- * @param error Error yang ditangkap
- * @param defaultMessage Pesan default jika error tidak dikenali
- * @param context Konteks tambahan untuk error
+ * Transforms API response error to appropriate AppException
  */
-export function handleServiceError(
+export const transformApiError = (
+  response: ApiResponse<unknown>,
+  defaultMessage: string = 'Terjadi kesalahan pada server',
+  context?: Record<string, unknown>,
+): AppException => {
+  // Use specific error message from API if available
+  const errorMessage = response.error ?? response.message ?? defaultMessage;
+
+  return determineExceptionType(errorMessage, context);
+};
+
+/**
+ * Creates error context with original error information
+ */
+const createErrorContext = (
+  error: Error,
+  context?: Record<string, unknown>,
+): Record<string, unknown> => {
+  return {
+    ...context,
+    originalError: error.message,
+    stack: error.stack,
+  };
+};
+
+/**
+ * Handles service errors consistently across the service layer
+ */
+export const handleServiceError = (
   error: unknown,
-  defaultMessage: string = "Terjadi kesalahan pada server",
-  context?: Record<string, unknown>
-): AppException {
-  // Jika error sudah berupa AppException, kembalikan langsung
+  defaultMessage: string = 'Terjadi kesalahan pada server',
+  context?: Record<string, unknown>,
+): AppException => {
+  // If error is already an AppException, return it directly
   if (error instanceof AppException) {
     return error;
   }
 
-  // Jika error adalah Error bawaan JavaScript
+  // If error is a JavaScript Error
   if (error instanceof Error) {
-    return new InternalServerException(error.message || defaultMessage, {
-      ...context,
-      originalError: error.message,
-      stack: error.stack,
-    });
+    const errorContext = createErrorContext(error, context);
+    return new InternalServerException(error.message || defaultMessage, errorContext);
   }
 
-  // Untuk error yang tidak dikenali
+  // For unrecognized errors
   return new InternalServerException(defaultMessage, {
     ...context,
     originalError: String(error),
   });
-}
+};
 
 /**
- * Fungsi wrapper untuk mencoba eksekusi fungsi dan menangani error secara konsisten
- * @param fn Fungsi yang akan dieksekusi
- * @param errorHandler Fungsi untuk menangani error
+ * Wrapper function to execute functions and handle errors consistently
  */
-export async function tryCatch<T, R>(
+export const tryCatch = async <T, R>(
   fn: () => Promise<T>,
-  errorHandler: ErrorHandler<R>
-): Promise<T | R> {
+  errorHandler: ErrorHandler<R>,
+): Promise<T | R> => {
   try {
     return await fn();
   } catch (error) {
     return errorHandler(error);
   }
-}
+};

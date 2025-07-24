@@ -1,0 +1,142 @@
+# CodeRabbit Configuration for Urgent Studio
+# https://docs.coderabbit.ai/configuration
+
+# Review settings
+reviews:
+  # Enable auto-review for all PRs
+  auto_review: true
+  
+  # Review depth
+  review_depth: "comprehensive"
+  
+  # Languages to review
+  languages:
+    - typescript
+    - javascript
+    - go
+    - sql
+    - yaml
+    - dockerfile
+
+# File patterns to include/exclude
+files:
+  include:
+    - "frontend/src/**/*.{ts,tsx,js,jsx}"
+    - "backend/**/*.go"
+    - "database/**/*.sql"
+    - "*.{yml,yaml}"
+    - "Dockerfile*"
+    - "docker-compose*.yml"
+  
+  exclude:
+    - "node_modules/**"
+    - "dist/**"
+    - "build/**"
+    - "*.min.js"
+    - "*.generated.*"
+    - "coverage/**"
+    - ".next/**"
+
+# Review focus areas
+focus:
+  # Security issues
+  security: true
+  
+  # Performance issues
+  performance: true
+  
+  # Code quality
+  code_quality: true
+  
+  # TypeScript specific
+  typescript_strict: true
+  
+  # Best practices
+  best_practices: true
+
+# Custom rules for Urgent Studio
+rules:
+  # TypeScript rules
+  typescript:
+    - no_any_type
+    - explicit_return_types
+    - strict_null_checks
+    - prefer_interfaces
+  
+  # React/Next.js rules
+  react:
+    - prefer_functional_components
+    - use_proper_hooks
+    - avoid_inline_styles
+  
+  # Go rules
+  go:
+    - proper_error_handling
+    - use_context
+    - avoid_global_variables
+  
+  # Security rules
+  security:
+    - no_hardcoded_secrets
+    - validate_inputs
+    - use_https
+    - sql_injection_prevention
+
+# Comment settings
+comments:
+  # Auto-comment on issues
+  auto_comment: true
+  
+  # Comment style
+  style: "constructive"
+  
+  # Include suggestions
+  include_suggestions: true
+  
+  # Include code examples
+  include_examples: true
+
+# Integration settings
+integrations:
+  # GitHub settings
+  github:
+    # Auto-approve minor fixes
+    auto_approve_minor: false
+    
+    # Request changes for major issues
+    request_changes_major: true
+    
+    # Add labels
+    add_labels: true
+    
+    # Labels to add
+    labels:
+      - "coderabbit-reviewed"
+      - "needs-review"
+
+# Notification settings
+notifications:
+  # Notify on critical issues
+  critical_issues: true
+  
+  # Notify on security issues
+  security_issues: true
+  
+  # Daily summary
+  daily_summary: false
+
+# Custom prompts for Urgent Studio context
+custom_prompts:
+  context: |
+    This is Urgent Studio, a design service marketplace built with:
+    - Frontend: Next.js 14, TypeScript, Tailwind CSS
+    - Backend: Go with Gin framework
+    - Database: PostgreSQL
+    - Focus on: Type safety, performance, security
+    
+    Please review with focus on:
+    1. TypeScript strict mode compliance
+    2. Security best practices
+    3. Performance optimization
+    4. Code maintainability
+    5. Business logic correctness

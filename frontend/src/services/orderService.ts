@@ -79,7 +79,7 @@ const DEFAULT_BRIEF_DETAILS = 'Deskripsi cukup panjang';
  * Validates required fields for BackendOrder
  */
 const validateBackendOrder = (backendOrder: BackendOrder): void => {
-  if (!backendOrder?.id || backendOrder.id === '') {
+  if (!backendOrder?.id) {
     throw new ValidationException('Data pesanan dari backend tidak lengkap', {
       backendOrder,
     });
@@ -101,7 +101,7 @@ const createDefaultStatusHistory = (
  * Safely converts nullable/undefined string to empty string
  */
 const safeStringValue = (value: string | null | undefined): string => {
-  return value !== null && value !== undefined && value !== '' ? value : '';
+  return value ?? '';
 };
 
 /**
@@ -123,6 +123,13 @@ const isString = (value: unknown): value is string => {
  */
 const isNumber = (value: unknown): value is number => {
   return typeof value === 'number';
+};
+
+/**
+ * Type guard to check if value is a non-empty string
+ */
+const isNonEmptyString = (value: unknown): value is string => {
+  return typeof value === 'string' && value.length > 0;
 };
 
 /**
@@ -175,9 +182,9 @@ const convertBackendOrderToOrder = (backendOrder: BackendOrder): Order => {
 const validateCartItem = (item: Product): void => {
   const requiredFields: Array<keyof Product> = ['id', 'name', 'price', 'tier'];
   const missingFields = requiredFields.filter(
-    field => {
+    (field): boolean => {
       const value = item[field];
-      return !value || value === '';
+      return value === null || value === undefined || value === '';
     }
   );
 
@@ -194,10 +201,11 @@ const validateCartItem = (item: Product): void => {
  */
 const groupCartByTier = (cart: Product[]): Record<string, Product[]> => {
   return cart.reduce((acc: Record<string, Product[]>, item: Product) => {
-    if (!acc[item.tier]) {
-      acc[item.tier] = [];
+    acc[item.tier] ??= [];
+    const tierArray = acc[item.tier];
+    if (tierArray) {
+      tierArray.push(item);
     }
-    acc[item.tier]!.push(item);
     return acc;
   }, {});
 };
@@ -224,32 +232,30 @@ const generateUniqueCode = (): number => {
  */
 const createBriefFromProduct = (item: Product): BriefData => {
   const briefData: BriefData = {
-    instanceId: item.instanceId && item.instanceId !== '' 
-      ? item.instanceId 
-      : `${item.id}-${Date.now()}`,
+    instanceId: item.instanceId ?? `${item.id}-${Date.now()}`,
     productId: item.id,
     productName: item.name,
     tier: item.tier,
-    briefDetails: isString(item.briefDetails) && 
-      item.briefDetails.length >= MIN_BRIEF_DETAILS_LENGTH
+    briefDetails: (isString(item.briefDetails) && 
+      item.briefDetails.length >= MIN_BRIEF_DETAILS_LENGTH)
       ? item.briefDetails 
       : DEFAULT_BRIEF_DETAILS,
   };
 
   // Add optional properties only if they have valid values
-  if (isString(item.googleDriveAssetLinks) && item.googleDriveAssetLinks !== '') {
+  if (isNonEmptyString(item.googleDriveAssetLinks)) {
     briefData.googleDriveAssetLinks = item.googleDriveAssetLinks;
   }
   
-  if (isNumber(item.width) || item.width === '') {
+  if (isNumber(item.width) || isNonEmptyString(item.width)) {
     briefData.width = item.width;
   }
   
-  if (isNumber(item.height) || item.height === '') {
+  if (isNumber(item.height) || isNonEmptyString(item.height)) {
     briefData.height = item.height;
   }
   
-  if (isString(item.unit) && item.unit !== '') {
+  if (isNonEmptyString(item.unit)) {
     briefData.unit = item.unit;
   }
 
@@ -270,12 +276,12 @@ const validateAndNormalizeBrief = (brief: unknown): BriefData => {
     };
 
     // Add optional properties only if they have valid values
-    if (isNumber(brief.height) || brief.height === '') {
-      briefData.height = brief.height;
+    if ((isNumber(brief.height) || isNonEmptyString(brief.height)) === true) {
+      briefData.height = brief.height as number | string;
     }
     
-    if (isNumber(brief.width) || brief.width === '') {
-      briefData.width = brief.width;
+    if ((isNumber(brief.width) || isNonEmptyString(brief.width)) === true) {
+      briefData.width = brief.width as number | string;
     }
     
     if (isString(brief.googleDriveAssetLinks)) {
@@ -321,18 +327,20 @@ export const createMultipleOrdersFromCart = async (
   return tryCatch<string[], never>(
     async (): Promise<string[]> => {
       // Validate input
-      if (!cart || cart.length === 0) {
+      if ((cart?.length ?? 0) === 0) {
         throw new ValidationException('Keranjang tidak boleh kosong', { cart });
       }
 
       // Validate each cart item
-      cart.forEach(validateCartItem);
+      cart.forEach((item: Product): void => validateCartItem(item));
 
       const orderIds: string[] = [];
       const cartByTier = groupCartByTier(cart);
 
       for (const [tier, itemsInTier] of Object.entries(cartByTier)) {
-        if (!itemsInTier || itemsInTier.length === 0) {continue;}
+        if (!itemsInTier || itemsInTier.length === 0) {
+          continue;
+        }
 
         const subtotal = calculateSubtotal(itemsInTier);
         const handlingFee = DEFAULT_HANDLING_FEE;
@@ -348,7 +356,7 @@ export const createMultipleOrdersFromCart = async (
           handlingFee,
           uniqueCode,
           tier,
-          briefs: itemsInTier.map(createBriefFromProduct),
+          briefs: itemsInTier.map((item: Product): BriefData => createBriefFromProduct(item)),
         };
 
         const parsedOrderData = CreateOrderSchema.parse(orderData);
@@ -356,7 +364,7 @@ export const createMultipleOrdersFromCart = async (
 
         if (!response.success || !response.data) {
           throw new ValidationException(
-            response.error || 'Gagal membuat pesanan',
+            response.error ?? 'Gagal membuat pesanan',
             { response },
           );
         }
@@ -498,7 +506,7 @@ export const updateOrderWithCustomerInfo = async (
       });
 
       if (!response.success) {
-        throw new Error(response.error || 'Gagal memperbarui info pelanggan');
+        throw new Error(response.error ?? 'Gagal memperbarui info pelanggan');
       }
     },
     (error): AppException => {
@@ -536,7 +544,7 @@ export const updateOrderStatus = async (
       const response = await backendService.updateOrderStatus(orderId, status);
 
       if (!response.success) {
-        throw new Error(response.error || 'Gagal memperbarui status pesanan');
+        throw new Error(response.error ?? 'Gagal memperbarui status pesanan');
       }
     },
     (error): AppException => {
@@ -560,7 +568,7 @@ export const updateOrderStatus = async (
 export const confirmPayment = async (orderIds: string[]): Promise<void> => {
   await tryCatch(
     async (): Promise<void> => {
-      if (!orderIds || orderIds.length === 0) {
+      if ((orderIds?.length ?? 0) === 0) {
         throw new ValidationException('Daftar ID Pesanan tidak boleh kosong.');
       }
 
@@ -611,7 +619,7 @@ export const deleteOrder = async (orderId: string): Promise<void> => {
       const response = await backendService.deleteOrder(orderId);
 
       if (!response.success) {
-        throw new Error(response.error || 'Gagal menghapus pesanan');
+        throw new Error(response.error ?? 'Gagal menghapus pesanan');
       }
     },
     (error): AppException => {

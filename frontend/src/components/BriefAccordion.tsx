@@ -1,8 +1,8 @@
 
 'use client';
 
-import React from 'react';
 import { Trash2 } from 'lucide-react';
+import React from 'react';
 import { UseFormReturn, UseFieldArrayRemove } from 'react-hook-form';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -85,17 +85,24 @@ export function BriefAccordion({ form, fields, remove, openItems, setOpenItems }
                 <span className="font-medium">
                   {brief.productName} - {brief.briefDetails || 'Belum ada detail'}
                 </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e: React.MouseEvent<HTMLDivElement>): void => {
                     e.stopPropagation();
                     handleRemoveBrief(field.originalIndex);
                   }}
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>): void => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleRemoveBrief(field.originalIndex);
+                    }
+                  }}
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer"
                 >
                   <Trash2 className="h-4 w-4" />
-                </Button>
+                </div>
               </div>
             </AccordionTrigger>
             <AccordionContent className="space-y-4 pt-4">

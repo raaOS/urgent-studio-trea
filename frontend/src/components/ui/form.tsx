@@ -104,7 +104,7 @@ const FormLabel = React.forwardRef<
   return (
     <Label
       ref={ref}
-      className={cn(Boolean(error) ? "text-destructive" : undefined, className)}
+      className={cn(error !== undefined && error !== null ? "text-destructive" : undefined, className)}
       htmlFor={formItemId}
       {...props}
     />
@@ -123,7 +123,7 @@ const FormControl = React.forwardRef<
       ref={ref}
       id={formItemId}
       aria-describedby={
-        !error
+        error === undefined || error === null
           ? `${formDescriptionId}`
           : `${formDescriptionId} ${formMessageId}`
       }
@@ -156,10 +156,10 @@ const FormMessage = React.forwardRef<
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, children, ...props }, ref) => {
   const { error, formMessageId } = useFormField()
-  const errorMessage = error && typeof error === 'object' && 'message' in error 
+  const errorMessage = error !== undefined && error !== null && typeof error === 'object' && 'message' in error 
     ? String((error as { message?: unknown }).message ?? "") 
     : "";
-  const body = Boolean(error) ? errorMessage : children
+  const body = error !== undefined && error !== null ? errorMessage : children
 
   if (body === undefined || body === null || body === "") {
     return null

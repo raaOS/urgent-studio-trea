@@ -79,14 +79,14 @@ const createErrorResponse = <T>(
 /**
  * Validates string parameter
  */
-const validateStringParam = (value: string, paramName: string): boolean => {
+const validateStringParam = (value: string): boolean => {
   return typeof value === 'string' && value.length > 0;
 };
 
 /**
  * Validates object parameter
  */
-const validateObjectParam = (value: unknown, paramName: string): boolean => {
+const validateObjectParam = (value: unknown): boolean => {
   return value !== null && value !== undefined && typeof value === 'object';
 };
 
@@ -158,7 +158,7 @@ class BackendService {
       async () => {
         const response = await api.get<BackendOrder[]>(API_ENDPOINTS.ORDERS);
 
-        if (response.success && response.data) {
+        if (response.success === true && response.data !== null && response.data !== undefined) {
           validateOrderData(response.data);
         }
 
@@ -175,7 +175,7 @@ class BackendService {
    * Get order by ID
    */
   async getOrderById(id: string): Promise<ApiResponse<BackendOrder>> {
-    if (!validateStringParam(id, 'id')) {
+    if (!validateStringParam(id)) {
       return createErrorResponse(
         'INVALID_ORDER_ID',
         'ID pesanan tidak valid',
@@ -187,7 +187,7 @@ class BackendService {
       async () => {
         const response = await api.get<BackendOrder>(`${API_ENDPOINTS.ORDERS}/${id}`);
 
-        if (response.success && response.data) {
+        if (response.success === true && response.data !== null && response.data !== undefined) {
           validateSingleOrderData(response.data);
         }
 
@@ -225,7 +225,7 @@ class BackendService {
    * Update order status
    */
   async updateOrderStatus(id: string, status: string): Promise<ApiResponse<BackendOrder>> {
-    if (!validateStringParam(id, 'id')) {
+    if (!validateStringParam(id)) {
       return createErrorResponse(
         'INVALID_ORDER_ID',
         'ID pesanan tidak valid',
@@ -233,7 +233,7 @@ class BackendService {
       );
     }
 
-    if (!validateStringParam(status, 'status')) {
+    if (!validateStringParam(status)) {
       return createErrorResponse(
         'INVALID_STATUS',
         'Status pesanan tidak valid',
@@ -263,7 +263,7 @@ class BackendService {
     id: string,
     customerData: CustomerUpdateData,
   ): Promise<ApiResponse<BackendOrder>> {
-    if (!validateStringParam(id, 'id')) {
+    if (!validateStringParam(id)) {
       return createErrorResponse(
         'INVALID_ORDER_ID',
         'ID pesanan tidak valid',
@@ -271,7 +271,7 @@ class BackendService {
       );
     }
 
-    if (!validateObjectParam(customerData, 'customerData')) {
+    if (!validateObjectParam(customerData)) {
       return createErrorResponse(
         'INVALID_CUSTOMER_DATA',
         'Data pelanggan tidak valid',
@@ -296,7 +296,7 @@ class BackendService {
    * Delete order
    */
   async deleteOrder(id: string): Promise<ApiResponse<{ message: string }>> {
-    if (!validateStringParam(id, 'id')) {
+    if (!validateStringParam(id)) {
       return createErrorResponse(
         'INVALID_ORDER_ID',
         'ID pesanan tidak valid',
@@ -342,7 +342,7 @@ class BackendService {
   async updateSettings(
     settings: Record<string, unknown>,
   ): Promise<ApiResponse<Record<string, unknown>>> {
-    if (!validateObjectParam(settings, 'settings')) {
+    if (!validateObjectParam(settings)) {
       return createErrorResponse(
         'INVALID_SETTINGS_DATA',
         'Data pengaturan tidak valid',
@@ -373,7 +373,7 @@ class BackendService {
       async () => {
         const response = await api.get<BackendLog[]>(API_ENDPOINTS.LOGS);
 
-        if (response.success && response.data) {
+        if (response.success === true && response.data !== null && response.data !== undefined) {
           validateLogData(response.data);
         }
 
@@ -394,7 +394,7 @@ class BackendService {
    * Create new log
    */
   async createLog(logData: Partial<BackendLog>): Promise<ApiResponse<BackendLog>> {
-    if (!validateObjectParam(logData, 'logData')) {
+    if (!validateObjectParam(logData)) {
       return createErrorResponse(
         'INVALID_LOG_DATA',
         'Data log tidak valid',

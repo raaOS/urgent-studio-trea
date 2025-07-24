@@ -1,5 +1,7 @@
 # Urgent Studio 2025
 
+[![CodeRabbit Reviews](https://img.shields.io/coderabbit/prs/github/raaOS/urgent-studio-cursor?utm_source=oss&utm_medium=github&utm_campaign=raaOS%2Furgent-studio-cursor&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)](https://coderabbit.ai)
+
 Ini adalah proyek Urgent Studio 2025, dibangun dengan Next.js, Go (Gin), dan PostgreSQL.
 
 ## Stack Teknologi
@@ -100,6 +102,22 @@ Proyek ini menggunakan GitHub Actions untuk CI/CD. Pipeline akan menjalankan:
 1. Linting dan type checking untuk frontend
 2. Build dan test untuk backend
 3. Build dan push Docker image (hanya untuk branch main)
+
+### CodeRabbit AI Code Review
+
+Proyek ini menggunakan **CodeRabbit** untuk AI-powered code review otomatis:
+
+- ✅ **Auto Review**: Setiap PR akan direview otomatis oleh AI
+- 🔒 **Security Check**: Deteksi vulnerability dan security issues
+- ⚡ **Performance**: Analisis performa dan optimasi
+- 📝 **Best Practices**: Saran untuk TypeScript, React, dan Go
+- 🎯 **Context Aware**: Review disesuaikan dengan konteks Urgent Studio
+
+**Setup CodeRabbit:**
+1. Daftar di [coderabbit.ai](https://coderabbit.ai/)
+2. Connect dengan GitHub repository
+3. Konfigurasi sudah tersedia di `.coderabbit.yaml`
+4. Workflow otomatis akan berjalan di setiap PR
 
 ## Dokumentasi
 
